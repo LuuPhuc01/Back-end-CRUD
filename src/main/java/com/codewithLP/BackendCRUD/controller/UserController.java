@@ -1,16 +1,15 @@
 package com.codewithLP.BackendCRUD.controller;
 
+import com.codewithLP.BackendCRUD.exception.UserNotFoundException;
 import com.codewithLP.BackendCRUD.model.User;
 import com.codewithLP.BackendCRUD.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@CrossOrigin("http://localhost:3000")
 public class UserController {
     @Autowired
     private UserRepository userRepository;
@@ -22,5 +21,29 @@ public class UserController {
     @GetMapping("/users")
     List<User> getAllUser() {
         return userRepository.findAll();
+    }
+    @GetMapping("/user/{id}")
+    User getUserById(@PathVariable Long id){
+        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+    }
+
+    @PutMapping("/user/{id}")
+    User updateUser(@RequestBody User newUser, @PathVariable Long id){
+        return userRepository.findById(id).map(user ->
+                {
+                    user.setName(newUser.getName());
+                    user.setUsername(newUser.getUsername());
+                    user.setEmail(newUser.getEmail());
+                    user.setPassword(newUser.getPassword());
+                    return userRepository.save(user);
+                }).orElseThrow(()->new UserNotFoundException(id));
+    }
+    @DeleteMapping("/user/{id}")
+    String deleteUser(@PathVariable Long id){
+        if(!userRepository.existsById(id)){
+            throw new UserNotFoundException(id);
+        }
+        userRepository.deleteById(id);
+        return "User with id " + id + " has been deleted success";
     }
 }
